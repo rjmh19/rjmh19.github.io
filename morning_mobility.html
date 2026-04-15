@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mobility">
+<meta name="theme-color" content="#f7f5f0">
+<title>Morning Mobility</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: Georgia, 'Times New Roman', serif; background: #f7f5f0; color: #2c2a26; padding: 1rem; max-width: 700px; margin: 0 auto; padding-bottom: 3rem; }
+h1 { font-size: 1.4rem; font-weight: normal; letter-spacing: -0.02em; color: #1a1816; border-bottom: 2px solid #2c2a26; padding-bottom: 0.4rem; margin-bottom: 0.3rem; }
+.meta { font-size: 0.72rem; color: #999; font-family: 'Courier New', monospace; margin-bottom: 1rem; }
+.summary-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 0.85rem; }
+.sum-cell { background: #fff; border: 1px solid #e0ddd7; border-radius: 6px; padding: 0.5rem; text-align: center; }
+.sum-val { font-size: 1.3rem; font-weight: bold; color: #1a1816; font-family: 'Courier New', monospace; }
+.sum-label { font-size: 0.65rem; color: #888; margin-top: 1px; }
+.timer-bar { display: flex; align-items: center; gap: 8px; background: #eeeae4; border-radius: 6px; padding: 0.6rem 0.85rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+.timer-display { font-size: 24px; font-weight: bold; color: #1a1816; font-family: 'Courier New', monospace; min-width: 62px; }
+.timer-middle { flex: 1; min-width: 120px; }
+.timer-label { font-size: 11px; color: #666; margin-bottom: 3px; }
+.progress-track { height: 4px; background: #d4cfc7; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 4px; background: #2d7a5e; border-radius: 2px; transition: width 1s linear; width: 0%; }
+.timer-btns { display: flex; gap: 6px; }
+.timer-btn { font-size: 12px; padding: 6px 14px; border-radius: 5px; border: 1px solid #c8c3b8; background: #fff; color: #2c2a26; cursor: pointer; font-family: Georgia, serif; min-height: 36px; }
+.timer-btn:active { background: #e8e4dd; }
+.mode-row { display: flex; gap: 6px; margin-bottom: 0.85rem; }
+.mode-pill { font-size: 12px; padding: 6px 14px; border-radius: 16px; border: 1px solid #c8c3b8; color: #888; cursor: pointer; background: #fff; font-family: Georgia, serif; min-height: 36px; }
+.mode-pill.active { background: #d8f0e6; color: #1a4e38; border-color: #2d7a5e; font-weight: bold; }
+.section-divider { display: flex; align-items: center; gap: 8px; margin: 0.6rem 0 0.3rem; }
+.div-label { font-size: 10px; font-weight: bold; color: #aaa; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; font-family: 'Courier New', monospace; }
+.div-line { flex: 1; height: 1px; background: #ddd9d2; }
+.ex-card { background: #fff; border: 1px solid #e0ddd7; border-radius: 8px; overflow: hidden; cursor: pointer; margin-bottom: 5px; }
+.ex-card.active { border-color: #2d7a5e; border-width: 1.5px; }
+.ex-card.dimmed { opacity: 0.35; }
+.ex-header { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 8px; padding: 0.75rem 0.85rem; }
+.ex-num { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; flex-shrink: 0; font-family: 'Courier New', monospace; }
+.num-floor { background: #d8f0e6; color: #0f6e56; }
+.num-kneeling { background: #dceaf7; color: #185fa5; }
+.num-standing { background: #faecd5; color: #854f0b; }
+.ex-title { font-size: 14px; font-weight: bold; color: #1a1816; margin-bottom: 2px; line-height: 1.3; }
+.ex-meta { font-size: 11px; color: #999; font-family: 'Courier New', monospace; }
+.ex-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.ex-duration { font-size: 13px; font-weight: bold; color: #2c2a26; font-family: 'Courier New', monospace; }
+.focus-badge { font-size: 10px; padding: 2px 7px; border-radius: 3px; font-family: 'Courier New', monospace; white-space: nowrap; }
+.f-hip { background: #d8f0e6; color: #0f6e56; }
+.f-shoulder { background: #dceaf7; color: #185fa5; }
+.f-knee { background: #faecd5; color: #854f0b; }
+.f-spine { background: #eeeaf8; color: #3c3489; }
+.f-rhomboid { background: #faece7; color: #712b13; }
+.f-whole { background: #eeeae4; color: #5f5e5a; }
+.ex-detail { display: none; padding: 0 0.85rem 0.9rem 3.3rem; font-size: 13px; color: #5a5650; line-height: 1.65; border-top: 1px solid #eeeae4; padding-top: 0.65rem; }
+.ex-detail.open { display: block; }
+.ex-detail strong { color: #1a1816; }
+.mod-note { display: inline-block; margin-top: 6px; font-size: 11px; background: #faecd5; color: #854f0b; border-radius: 3px; padding: 3px 8px; font-family: 'Courier New', monospace; }
+.core-tag { display: inline-block; margin-left: 5px; font-size: 10px; background: #d8f0e6; color: #0f6e56; border-radius: 3px; padding: 1px 5px; font-family: 'Courier New', monospace; vertical-align: middle; position: relative; top: -1px; }
+.footer-note { margin-top: 0.85rem; font-size: 12px; color: #999; line-height: 1.65; border-top: 1px solid #e0ddd7; padding-top: 0.75rem; }
+.principle { background: #2c2a26; color: #e8e4dd; border-radius: 6px; padding: 0.9rem 1.1rem; margin-top: 0.85rem; font-size: 13px; line-height: 1.65; }
+.principle strong { color: #f7f5f0; }
+</style>
+</head>
+<body>
+<h1>Morning mobility</h1>
+<p class="meta">Base period · Pre-coffee · 5:30am · Rob's Life System v2.0</p>
+<div class="summary-row">
+  <div class="sum-cell"><div class="sum-val">10</div><div class="sum-label">exercises</div></div>
+  <div class="sum-cell"><div class="sum-val">20</div><div class="sum-label">min full</div></div>
+  <div class="sum-cell"><div class="sum-val">10</div><div class="sum-label">min core</div></div>
+</div>
+<div class="timer-bar">
+  <div class="timer-display" id="timer-display">20:00</div>
+  <div class="timer-middle">
+    <div class="timer-label" id="timer-label">Ready — press start</div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+  <div class="timer-btns">
+    <button class="timer-btn" id="start-btn" onclick="toggleTimer()">Start</button>
+    <button class="timer-btn" onclick="resetTimer()">Reset</button>
+  </div>
+</div>
+<div class="mode-row">
+  <button class="mode-pill active" onclick="setMode('full',this)">Full — 20 min</button>
+  <button class="mode-pill" onclick="setMode('core',this)">Core — 10 min</button>
+</div>
+<div class="section-divider"><div class="div-label">Phase 1 — supine</div><div class="div-line"></div></div>
+<div class="ex-card" id="ex-0" onclick="toggle(0)">
+  <div class="ex-header"><div class="ex-num num-floor">1</div><div><div class="ex-title">Knee-to-chest pull</div><div class="ex-meta">supine · both sides</div></div><div class="ex-right"><div class="ex-duration">90s</div><div class="focus-badge f-hip">hips</div></div></div>
+  <div class="ex-detail" id="det-0">Lie flat on your back. Draw one knee slowly to your chest, hold 3 seconds, release. Alternate legs. <strong>8 slow repetitions per side.</strong> Keep the opposite leg flat. The therapeutic value comes from the hold, not the speed.<br><span class="mod-note">Wrist safe — no hand loading</span></div>
+</div>
+<div class="ex-card" id="ex-1" onclick="toggle(1)">
+  <div class="ex-header"><div class="ex-num num-floor">2</div><div><div class="ex-title">Supine hip circles <span class="core-tag">core</span></div><div class="ex-meta">supine · both sides</div></div><div class="ex-right"><div class="ex-duration">90s</div><div class="focus-badge f-hip">hips</div></div></div>
+  <div class="ex-detail" id="det-1">Lie on back, draw one knee to 90 degrees. Slow circles with the knee — <strong>6 forward, 6 backward.</strong> Imagine drawing a large circle on the ceiling. Primary hip mobility exercise. Switch sides.<br><span class="mod-note">Wrist safe — no hand loading</span></div>
+</div>
+<div class="ex-card" id="ex-2" onclick="toggle(2)">
+  <div class="ex-header"><div class="ex-num num-floor">3</div><div><div class="ex-title">Supine spinal rotation <span class="core-tag">core</span></div><div class="ex-meta">supine · both sides</div></div><div class="ex-right"><div class="ex-duration">90s</div><div class="focus-badge f-spine">spine</div></div></div>
+  <div class="ex-detail" id="det-2">Lie on back, knees bent. Let both knees slowly fall to one side — pause, breathe, return. <strong>6 per side, very slow.</strong> Arms out for counterbalance. Let gravity do the work — do not force range.<br><span class="mod-note">Wrist safe — no hand loading</span></div>
+</div>
+<div class="ex-card" id="ex-3" onclick="toggle(3)">
+  <div class="ex-header"><div class="ex-num num-floor">4</div><div><div class="ex-title">Ankle circles + foot pumps</div><div class="ex-meta">supine · both feet</div></div><div class="ex-right"><div class="ex-duration">60s</div><div class="focus-badge f-whole">ankles</div></div></div>
+  <div class="ex-detail" id="det-3">Still lying down. Flex and point each foot 10 times, then circle each ankle 8 times each direction. <strong>Both feet simultaneously.</strong> Important for gout management — uric acid pools in distal joints overnight.<br><span class="mod-note">Wrist safe — no hand loading</span></div>
+</div>
+<div class="section-divider"><div class="div-label">Phase 2 — forearms on floor</div><div class="div-line"></div></div>
+<div class="ex-card" id="ex-4" onclick="toggle(4)">
+  <div class="ex-header"><div class="ex-num num-kneeling">5</div><div><div class="ex-title">Cat-cow on forearms <span class="core-tag">core</span></div><div class="ex-meta">kneeling · forearms flat</div></div><div class="ex-right"><div class="ex-duration">90s</div><div class="focus-badge f-spine">spine</div></div></div>
+  <div class="ex-detail" id="det-4">Kneel, forearms flat on floor, elbows under shoulders — zero wrist load. Arch spine up (cat), hold 2 sec, sag down (cow), hold 2 sec. <strong>10 slow cycles. Exhale on cat, inhale on cow.</strong><br><span class="mod-note">Forearms only — zero wrist or thumb load</span></div>
+</div>
+<div class="ex-card" id="ex-5" onclick="toggle(5)">
+  <div class="ex-header"><div class="ex-num num-kneeling">6</div><div><div class="ex-title">Thread-the-needle <span class="core-tag">core</span></div><div class="ex-meta">forearms on floor · both sides</div></div><div class="ex-right"><div class="ex-duration">90s</div><div class="focus-badge f-rhomboid">rhomboid</div></div></div>
+  <div class="ex-detail" id="det-5">From forearms position, lift one arm and slide it along the floor under your body, rotating the thoracic spine. Let shoulder drop toward the floor. <strong>Hold 3 seconds. 6 per side.</strong> Primary rhomboid exercise.<br><span class="mod-note">Sliding arm — back of hand or fist, no thumb pressure</span></div>
+</div>
+<div class="section-divider"><div class="div-label">Phase 3 — standing</div><div class="div-line"></div></div>
+<div class="ex-card" id="ex-6" onclick="toggle(6)">
+  <div class="ex-header"><div class="ex-num num-standing">7</div><div><div class="ex-title">Hip circles standing <span class="core-tag">core</span></div><div class="ex-meta">standing · hands on hips</div></div><div class="ex-right"><div class="ex-duration">90s</div><div class="focus-badge f-hip">hips</div></div></div>
+  <div class="ex-detail" id="det-6">Feet shoulder-width, hands on hips. Large slow pelvis circles — <strong>8 forward, 8 backward. Exaggerate the movement.</strong> Knees soft. Joints are now ready for weight-bearing after supine work.<br><span class="mod-note">Hands on hips — no wrist involvement</span></div>
+</div>
+<div class="ex-card" id="ex-7" onclick="toggle(7)">
+  <div class="ex-header"><div class="ex-num num-standing">8</div><div><div class="ex-title">Shoulder circles + arm swings <span class="core-tag">core</span></div><div class="ex-meta">standing</div></div><div class="ex-right"><div class="ex-duration">90s</div><div class="focus-badge f-shoulder">shoulders</div></div></div>
+  <div class="ex-detail" id="det-7">Slow shoulder rolls: <strong>8 forward, 8 backward</strong> — large and deliberate. Cross-body arm swings x10. <strong>6 full arm circles each direction.</strong> Fists loosely closed.<br><span class="mod-note">Fists loosely closed — no gripping</span></div>
+</div>
+<div class="ex-card" id="ex-8" onclick="toggle(8)">
+  <div class="ex-header"><div class="ex-num num-standing">9</div><div><div class="ex-title">Knee circles + calf raises <span class="core-tag">core</span></div><div class="ex-meta">standing · palms on knees</div></div><div class="ex-right"><div class="ex-duration">90s</div><div class="focus-badge f-knee">knees</div></div></div>
+  <div class="ex-detail" id="det-8">Feet together, slight squat, palms on knees. Slow circles — <strong>8 each direction.</strong> Then stand and do <strong>15 slow calf raises, 1 second hold at top.</strong> Critical before running.<br><span class="mod-note">Palms resting flat — minimal thumb pressure</span></div>
+</div>
+<div class="ex-card" id="ex-9" onclick="toggle(9)">
+  <div class="ex-header"><div class="ex-num num-standing">10</div><div><div class="ex-title">Wrist + hand mobility</div><div class="ex-meta">standing · always last</div></div><div class="ex-right"><div class="ex-duration">60s</div><div class="focus-badge f-whole">wrist</div></div></div>
+  <div class="ex-detail" id="det-9">Arms in front, palms down. Wrist circles — <strong>8 each direction.</strong> Open and close hands 10 times. <strong>Thumb circles — 6 each direction, pain-free range only.</strong> Stop immediately if sharp pain. Always last — never do this cold.<br><span class="mod-note">Pain-free range only — stop if sharp pain</span></div>
+</div>
+<div class="footer-note"><strong>Core routine</strong> (exercises marked core — approx 10 min): use on good stiffness days or when time is short. Full routine on moderate or bad stiffness days.</div>
+<div class="principle"><strong>Not a stretching routine — a therapeutic mobility routine.</strong> Slow, controlled, circular movement distributes synovial fluid. Never force range. Always supine first, then forearms, then standing.</div>
+<script>
+const FULL=1200,CORE=600,coreSet=new Set([1,2,4,5,6,7,8]);
+let total=FULL,remaining=FULL,running=false,iv=null;
+function fmt(s){const m=Math.floor(s/60),sec=s%60;return m+':'+(sec<10?'0':'')+sec;}
+function updateDisp(){document.getElementById('timer-display').textContent=fmt(remaining);const pct=Math.round(((total-remaining)/total)*100);document.getElementById('progress-fill').style.width=pct+'%';}
+function toggleTimer(){if(running){clearInterval(iv);running=false;document.getElementById('start-btn').textContent='Resume';document.getElementById('timer-label').textContent='Paused';}else{running=true;document.getElementById('start-btn').textContent='Pause';document.getElementById('timer-label').textContent='In progress…';iv=setInterval(()=>{if(remaining>0){remaining--;updateDisp();}else{clearInterval(iv);running=false;document.getElementById('start-btn').textContent='Done';document.getElementById('timer-label').textContent='Complete — go make coffee';document.getElementById('progress-fill').style.width='100%';}},1000);}}
+function resetTimer(){clearInterval(iv);running=false;remaining=total;document.getElementById('start-btn').textContent='Start';document.getElementById('timer-label').textContent='Ready — press start';updateDisp();}
+function setMode(mode,btn){document.querySelectorAll('.mode-pill').forEach(p=>p.classList.remove('active'));btn.classList.add('active');clearInterval(iv);running=false;total=mode==='core'?CORE:FULL;remaining=total;document.getElementById('start-btn').textContent='Start';document.getElementById('timer-label').textContent=mode==='core'?'Core (10 min) — 7 exercises':'Full (20 min) — 10 exercises';for(let i=0;i<10;i++){document.getElementById('ex-'+i).classList.toggle('dimmed',mode==='core'&&!coreSet.has(i));}updateDisp();}
+function toggle(i){const det=document.getElementById('det-'+i),card=document.getElementById('ex-'+i),wasOpen=det.classList.contains('open');document.querySelectorAll('.ex-detail').forEach(d=>d.classList.remove('open'));document.querySelectorAll('.ex-card').forEach(c=>c.classList.remove('active'));if(!wasOpen){det.classList.add('open');card.classList.add('active');}}
+</script>
+</body>
+</html>
