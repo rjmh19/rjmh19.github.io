@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Strength Routine — Rob's Life System</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, 'Times New Roman', serif; background: #f7f5f0; color: #2c2a26; padding: 1rem; max-width: 680px; margin: 0 auto; }
+
+  h1 { font-size: 1.4rem; font-weight: normal; letter-spacing: -0.02em; color: #1a1816; border-bottom: 2px solid #2c2a26; padding-bottom: 0.5rem; margin-bottom: 0.3rem; }
+  .meta { font-size: 0.72rem; color: #999; font-family: 'Courier New', monospace; margin-bottom: 1rem; line-height: 1.5; }
+
+  /* Summary row */
+  .summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 0.85rem; }
+  .sum-cell { background: #fff; border: 1px solid #e0ddd7; border-radius: 6px; padding: 0.55rem 0.5rem; text-align: center; }
+  .sum-val { font-size: 1.3rem; font-weight: bold; color: #1a1816; font-family: 'Courier New', monospace; }
+  .sum-label { font-size: 0.65rem; color: #888; margin-top: 2px; line-height: 1.3; }
+
+  /* GLP-1 alert */
+  .glp-alert { background: #faecd5; border-left: 3px solid #b07d1a; border-radius: 0 6px 6px 0; padding: 0.7rem 0.85rem; margin-bottom: 0.85rem; font-size: 0.8rem; color: #5e3e0a; line-height: 1.55; }
+  .glp-alert strong { color: #3a2000; }
+
+  /* Timer */
+  .timer-bar { display: flex; align-items: center; gap: 8px; background: #eeeae4; border-radius: 6px; padding: 0.6rem 0.85rem; margin-bottom: 0.6rem; }
+  .timer-display { font-size: 20px; font-weight: bold; color: #1a1816; font-family: 'Courier New', monospace; min-width: 52px; }
+  .timer-label { font-size: 11px; color: #666; flex: 1; line-height: 1.3; }
+  .progress-track { flex: 1; height: 4px; background: #d4cfc7; border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 4px; background: #854f0b; border-radius: 2px; transition: width 1s linear; width: 0%; }
+  .timer-btn { font-size: 12px; padding: 5px 12px; border-radius: 5px; border: 1px solid #c8c3b8; background: #fff; color: #2c2a26; cursor: pointer; font-family: Georgia, serif; white-space: nowrap; }
+  .timer-btn:active { background: #f0ede8; }
+
+  /* Phase tabs */
+  .tab-row { display: flex; gap: 0; margin-bottom: 1rem; border-bottom: 1.5px solid #d4cfc7; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tab { padding: 0.5rem 0.85rem; font-size: 0.78rem; cursor: pointer; border: none; background: none; color: #888; font-family: Georgia, serif; border-bottom: 2px solid transparent; margin-bottom: -1.5px; white-space: nowrap; }
+  .tab.active { color: #2c2a26; border-bottom-color: #2c2a26; font-weight: bold; }
+  .pane { display: none; }
+  .pane.active { display: block; }
+
+  /* Section divider */
+  .section-divider { display: flex; align-items: center; gap: 8px; margin: 0.75rem 0 0.35rem; }
+  .div-label { font-size: 10px; font-weight: bold; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; font-family: 'Courier New', monospace; }
+  .div-line { flex: 1; height: 1px; background: #ddd9d2; }
+
+  /* Exercise cards */
+  .ex-card { background: #fff; border: 1px solid #e0ddd7; border-radius: 8px; overflow: hidden; cursor: pointer; margin-bottom: 5px; transition: border-color 0.15s; }
+  .ex-card:active { border-color: #b8b4ae; }
+  .ex-card.active-card { border-color: #854f0b; border-width: 1.5px; }
+
+  .ex-header { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 8px; padding: 0.65rem 0.85rem; }
+  .ex-num { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; flex-shrink: 0; font-family: 'Courier New', monospace; }
+  .num-lower   { background: #d8f0e6; color: #0f6e56; }
+  .num-upper   { background: #dceaf7; color: #185fa5; }
+  .num-core    { background: #faecd5; color: #854f0b; }
+  .num-stretch { background: #eeeaf8; color: #3c3489; }
+
+  .ex-title { font-size: 13px; font-weight: bold; color: #1a1816; margin-bottom: 1px; line-height: 1.3; }
+  .ex-meta  { font-size: 10px; color: #999; font-family: 'Courier New', monospace; }
+  .ex-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+  .ex-sets { font-size: 12px; font-weight: bold; color: #2c2a26; font-family: 'Courier New', monospace; }
+
+  .focus-badge { font-size: 9px; padding: 2px 5px; border-radius: 3px; font-family: 'Courier New', monospace; white-space: nowrap; }
+  .f-lower   { background: #d8f0e6; color: #0f6e56; }
+  .f-upper   { background: #dceaf7; color: #185fa5; }
+  .f-core    { background: #faecd5; color: #854f0b; }
+  .f-stretch { background: #eeeaf8; color: #3c3489; }
+  .f-full    { background: #eeeae4; color: #5f5e5a; }
+
+  .ex-detail { display: none; padding: 0 0.85rem 0.85rem 0.85rem; font-size: 12px; color: #5a5650; line-height: 1.65; border-top: 1px solid #eeeae4; padding-top: 0.65rem; }
+  .ex-detail.open { display: block; }
+  .ex-detail strong { color: #1a1816; }
+
+  .mod-note { display: inline-block; margin-top: 6px; font-size: 10px; background: #faecd5; color: #854f0b; border-radius: 3px; padding: 2px 7px; font-family: 'Courier New', monospace; }
+  .bone-tag { display: inline-block; margin-top: 4px; margin-left: 4px; font-size: 10px; background: #dceaf7; color: #185fa5; border-radius: 3px; padding: 2px 6px; font-family: 'Courier New', monospace; }
+
+  /* Stretch card variant */
+  .stretch-card { background: #f2f0fa; border: 1px solid #d8d4f0; }
+  .stretch-card.active-card { border-color: #3c3489; }
+
+  /* Rest timer */
+  .rest-row { display: flex; align-items: center; gap: 8px; background: #eeebe6; border-radius: 5px; padding: 0.45rem 0.75rem; margin: 0.4rem 0; font-size: 11px; color: #666; }
+  .rest-btn { font-size: 11px; padding: 3px 10px; border-radius: 4px; border: 1px solid #c8c3b8; background: #fff; color: #2c2a26; cursor: pointer; font-family: Georgia, serif; }
+  .rest-count { font-family: 'Courier New', monospace; font-size: 13px; font-weight: bold; color: #1a1816; min-width: 36px; }
+
+  /* Protocol box */
+  .protocol { background: #fff9ee; border: 1px solid #e8c97a; border-radius: 6px; padding: 0.75rem 0.85rem; margin-bottom: 0.5rem; font-size: 0.78rem; color: #5a4010; line-height: 1.6; }
+  .protocol strong { color: #3a2800; }
+
+  /* Phase intro */
+  .phase-intro { background: #fff; border: 1px solid #e0ddd7; border-radius: 6px; padding: 0.75rem 0.85rem; margin-bottom: 0.85rem; font-size: 0.8rem; color: #5a5650; line-height: 1.6; }
+  .phase-intro strong { color: #1a1816; }
+
+  /* Principle */
+  .principle { background: #2c2a26; color: #e8e4dd; border-radius: 6px; padding: 0.9rem 1rem; margin-top: 1rem; font-size: 12px; line-height: 1.7; }
+  .principle strong { color: #f7f5f0; }
+  .principle-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Courier New', monospace; color: #aaa; margin-bottom: 0.5rem; }
+
+  /* Progression table */
+  .prog-table { width: 100%; border-collapse: collapse; font-size: 11px; margin: 0.5rem 0; }
+  .prog-table th { text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 0.07em; color: #999; font-family: 'Courier New', monospace; padding: 0.25rem 0.4rem; border-bottom: 1px solid #e0ddd7; }
+  .prog-table td { padding: 0.35rem 0.4rem; border-bottom: 1px solid #eeeae4; vertical-align: top; color: #5a5650; }
+  .prog-table tr:last-child td { border-bottom: none; }
+  .prog-table td:first-child { font-family: 'Courier New', monospace; font-weight: bold; color: #1a1816; white-space: nowrap; }
+
+  /* Footer note */
+  .footer-note { margin-top: 0.85rem; font-size: 11px; color: #999; line-height: 1.65; border-top: 1px solid #e0ddd7; padding-top: 0.75rem; }
+
+  @media (min-width: 600px) {
+    body { padding: 2rem; }
+    h1 { font-size: 1.6rem; }
+    .ex-title { font-size: 14px; }
+    .ex-detail { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Strength routine</h1>
+<p class="meta">Rob's Life System · HFD practice · Anatomical adaptation phase · April 2026 · v1.0<br>
+File: Logbooks/HFD/_Admin/strength_routine.html</p>
+
+<div class="summary-row">
+  <div class="sum-cell"><div class="sum-val">M/W/F</div><div class="sum-label">3× per week</div></div>
+  <div class="sum-cell"><div class="sum-val">40</div><div class="sum-label">min session</div></div>
+  <div class="sum-cell"><div class="sum-val">3</div><div class="sum-label">phases</div></div>
+</div>
+
+<div class="glp-alert">
+  <strong>GLP-1 protocol:</strong> Resistance training is essential muscle preservation work while on GLP-1 — not optional. Prioritise protein 1.6–2g per kg bodyweight daily. Strength sessions protect lean mass during weight loss. Do not skip sessions during the weight loss phase.
+</div>
+
+<div class="timer-bar">
+  <div class="timer-display" id="timer-display">40:00</div>
+  <div style="flex:1">
+    <div class="timer-label" id="timer-label">Ready — press start</div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+  <button class="timer-btn" id="start-btn" onclick="toggleTimer()">Start</button>
+  <button class="timer-btn" onclick="resetTimer()">Reset</button>
+</div>
+
+<div class="tab-row">
+  <button class="tab active" onclick="showPane('phase1', this)">Phase 1 — Centr 3</button>
+  <button class="tab" onclick="showPane('phase2', this)">Phase 2 — Cottage</button>
+  <button class="tab" onclick="showPane('phase3', this)">Phase 3 — Return</button>
+  <button class="tab" onclick="showPane('protocols', this)">Protocols</button>
+  <button class="tab" onclick="showPane('progression', this)">Progression</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PHASE 1 — CENTR 3 · ANATOMICAL ADAPTATION
+     6 weeks · 2–3× per week · light load · movement first
+════════════════════════════════════════════════════ -->
+<div class="pane active" id="pane-phase1">
+
+<div class="phase-intro">
+  <strong>Phase 1 · Anatomical adaptation · 6 weeks · Centr 3</strong><br>
+  Goal is movement pattern quality, not load. Tendons, connective tissue, and joint structures adapt more slowly than muscle — this phase builds the foundation they need. Load should feel almost too easy for the first 3–4 weeks. That is correct. Three sessions per week on Monday, Wednesday, Friday. Never strength train on back-to-back days.
+</div>
+
+<!-- WARM-UP -->
+<div class="section-divider"><div class="div-label">Warm-up — 5 min</div><div class="div-line"></div></div>
+
+<div class="ex-card" id="p1-0" onclick="toggle('p1',0)">
+  <div class="ex-header">
+    <div class="ex-num num-core">W</div>
+    <div><div class="ex-title">Concept 2 row — easy pace</div><div class="ex-meta">warm-up · full body activation</div></div>
+    <div class="ex-right"><div class="ex-sets">5 min</div><div class="focus-badge f-full">full body</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-0">
+    Damper setting 3–4. Rate 18–20 strokes per minute. Relaxed pace — this is activation, not cardio. <strong>Focus on the sequence: legs push → lean back → arms pull. Reverse to return.</strong> The row warms the hips, posterior chain, upper back, and core simultaneously — ideal pre-strength activation. Keep the grip loose throughout. Left wrist stays neutral — do not let it flex backward at the catch. If the catch position causes wrist discomfort, use an overhand grip with a slightly shorter reach.<br>
+    <span class="mod-note">Keep left wrist neutral at catch — do not flex backward</span>
+  </div>
+</div>
+
+<!-- LOWER BODY -->
+<div class="section-divider"><div class="div-label">Lower body — hip, glute, quad, calf</div><div class="div-line"></div></div>
+
+<div class="ex-card" id="p1-1" onclick="toggle('p1',1)">
+  <div class="ex-header">
+    <div class="ex-num num-lower">1</div>
+    <div><div class="ex-title">Cable pull-through</div><div class="ex-meta">low cable · hip hinge pattern</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 12</div><div class="focus-badge f-lower">glutes / hips</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-1">
+    Set the low cable with the rope handle. Stand facing away from the machine, straddle the cable. Hinge at the hips — push them back, soft knee bend, chest stays up. <strong>Drive hips forward to stand tall. Squeeze glutes at the top. 12 slow reps.</strong> This teaches the hip hinge — the foundational movement for glute loading, deadlifts, and posterior chain work. Start very light (5–10kg) — the goal is pattern, not load. Bone density benefit from hip loading begins here.<br>
+    <span class="mod-note">Rope handle — neutral grip, wrist safe throughout</span>
+    <span class="bone-tag">bone density</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p1-2" onclick="toggle('p1',2)">
+  <div class="ex-header">
+    <div class="ex-num num-lower">2</div>
+    <div><div class="ex-title">Goblet squat — Smith bar or cable</div><div class="ex-meta">smith bar / low cable · squat pattern</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 10</div><div class="focus-badge f-lower">quads / glutes</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-2">
+    Use the Smith bar at chest height or hold the rope at chest from the low cable. Feet shoulder-width, toes slightly out. <strong>Sit back and down — knees track over toes, chest stays up, depth to comfortable range only.</strong> Drive through the whole foot to stand. Do not let the knees cave inward. Start with bodyweight or minimal load (the bar only). The squat pattern is the most important lower body movement for skiing and functional daily life. Depth improves over weeks — do not force it early.<br>
+    <span class="mod-note">Hands cupped around bar — no wrist loading required</span>
+    <span class="bone-tag">bone density</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p1-3" onclick="toggle('p1',3)">
+  <div class="ex-header">
+    <div class="ex-num num-lower">3</div>
+    <div><div class="ex-title">Reverse lunge — bodyweight</div><div class="ex-meta">bodyweight · single leg pattern</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 8 each</div><div class="focus-badge f-lower">quads / glutes</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-3">
+    Stand tall, hands on hips or arms forward for balance. Step one foot back — lower the back knee toward the floor, front shin stays vertical. <strong>Push through the front heel to return. 8 each leg, alternating.</strong> Reverse lunge is safer than forward lunge for knee tracking and easier to control. Single-leg work is critical for skiing balance and gait mechanics. Do not hold cables or weights until the pattern is solid — typically 2–3 sessions. If balance is unstable, hold the Smith bar lightly with one hand.<br>
+    <span class="mod-note">Hands on hips or lightly touch Smith bar — no grip load</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p1-4" onclick="toggle('p1',4)">
+  <div class="ex-header">
+    <div class="ex-num num-lower">4</div>
+    <div><div class="ex-title">Standing calf raise — Smith bar</div><div class="ex-meta">smith bar · bilateral</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 15</div><div class="focus-badge f-lower">calves / ankles</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-4">
+    Stand on the floor or on a step if available, Smith bar resting lightly across upper traps (or hands on bar for balance only). <strong>Rise slowly onto the balls of both feet, pause 1–2 seconds at the top, lower with control over 3 seconds.</strong> The slow lowering (eccentric) phase is where the real adaptation happens — do not rush down. Calf strength supports running economy, ankle stability, and gout joint management. 15 reps is correct at this stage — higher rep range for calves builds endurance capacity first.<br>
+    <span class="mod-note">Hands resting on bar only — no downward wrist pressure</span>
+  </div>
+</div>
+
+<!-- UPPER BODY -->
+<div class="section-divider"><div class="div-label">Upper body — pull and push</div><div class="div-line"></div></div>
+
+<div class="ex-card" id="p1-5" onclick="toggle('p1',5)">
+  <div class="ex-header">
+    <div class="ex-num num-upper">5</div>
+    <div><div class="ex-title">Cable lat pulldown — curl bar</div><div class="ex-meta">high cable · bilateral pull</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 12</div><div class="focus-badge f-upper">lats / rhomboids</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-5">
+    Attach the curl bar to the high cable. Sit or stand, grip the bar with a shoulder-width underhand or neutral grip. <strong>Pull the bar to upper chest — lead with the elbows, not the hands. Pause at the bottom. Slow return over 3 seconds.</strong> Start light enough that you feel the lats working, not the biceps. The left rhomboid tightness means the left shoulder blade may not retract as fully as the right — this is fine, do not force symmetry. Over weeks, the pulling motion will gently improve the rhomboid range.<br>
+    <span class="mod-note">Underhand grip keeps wrist neutral — avoid overhand if it causes wrist strain</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p1-6" onclick="toggle('p1',6)">
+  <div class="ex-header">
+    <div class="ex-num num-upper">6</div>
+    <div><div class="ex-title">Seated cable row — D-handles</div><div class="ex-meta">low cable · bilateral pull</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 12</div><div class="focus-badge f-upper">mid-back / rhomboids</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-6">
+    Sit on the bench facing the low cable, D-handles in both hands, palms facing each other (neutral grip). <strong>Sit tall, slight lean back from the hip. Pull handles to lower ribcage — squeeze shoulder blades together at the end. Slow 3-second return.</strong> Neutral grip is completely wrist-safe. This is the primary upper back rebuilding exercise — the rhomboids and mid-traps are the postural muscles most lost to desk life and reduced activity. The left rhomboid tightness may feel the stretch more on this side — that is therapeutic.<br>
+    <span class="mod-note">Neutral grip D-handles — palms facing each other, wrist fully safe</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p1-7" onclick="toggle('p1',7)">
+  <div class="ex-header">
+    <div class="ex-num num-upper">7</div>
+    <div><div class="ex-title">Cable chest press — D-handles</div><div class="ex-meta">mid cable · bilateral push</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 12</div><div class="focus-badge f-upper">chest / shoulders</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-7">
+    Set both cables at mid-chest height. Stand facing away from the machine, D-handle in each hand, palms facing down or slightly inward. Step forward slightly. <strong>Press both handles forward to full arm extension — do not lock elbows. Slow 3-second return, feel the chest stretch at the end.</strong> This replaces the push-up, which would cause backward wrist pressure. The cable provides constant tension throughout the range. Keep the wrists straight — do not let them bend backward at any point during the press.<br>
+    <span class="mod-note">Wrists straight throughout — cable press replaces push-ups for wrist safety</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p1-8" onclick="toggle('p1',8)">
+  <div class="ex-header">
+    <div class="ex-num num-upper">8</div>
+    <div><div class="ex-title">Cable shoulder press — D-handles</div><div class="ex-meta">low cable · overhead push</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 10</div><div class="focus-badge f-upper">shoulders / traps</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-8">
+    Set cables low. Stand, D-handles at shoulder height, palms forward. <strong>Press both arms overhead to full extension. Lower with control over 3 seconds.</strong> Start very light — overhead pressing is a demanding pattern and the shoulder stabilisers need time to adapt. Stop well below the point of any impingement or discomfort. The wrist stays in a neutral-to-slight-extension position that is safe for the left thumb — avoid loading in full wrist flexion. If any left thumb sharp pain: stop and substitute lateral raises.<br>
+    <span class="mod-note">Keep wrists in neutral position — stop if left thumb sharp pain occurs</span>
+  </div>
+</div>
+
+<!-- CORE -->
+<div class="section-divider"><div class="div-label">Core — stability and anti-rotation</div><div class="div-line"></div></div>
+
+<div class="ex-card" id="p1-9" onclick="toggle('p1',9)">
+  <div class="ex-header">
+    <div class="ex-num num-core">9</div>
+    <div><div class="ex-title">Dead bug</div><div class="ex-meta">floor · supine · no wrist load</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 8 each</div><div class="focus-badge f-core">core / stability</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-9">
+    Lie on your back, arms pointing to ceiling, knees bent at 90 degrees in the air. <strong>Slowly lower one arm overhead and the opposite leg toward the floor simultaneously — lower back stays flat on the floor. Return. Alternate. 8 per side.</strong> Do not let the lower back arch away from the floor — this is the entire exercise. The dead bug trains the deep core stabilisers (transverse abdominis) in a completely wrist-safe position. It is the most important core exercise for running form, injury prevention, and protecting the lumbar spine during skiing.<br>
+    <span class="mod-note">Completely wrist-safe — arms move freely with no loading</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p1-10" onclick="toggle('p1',10)">
+  <div class="ex-header">
+    <div class="ex-num num-core">10</div>
+    <div><div class="ex-title">Cable Pallof press</div><div class="ex-meta">mid cable · anti-rotation</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 10 each</div><div class="focus-badge f-core">core / anti-rotation</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-10">
+    Set one cable at chest height. Stand sideways to the machine, D-handle held at chest with both hands. <strong>Press the handle straight out from your chest — hold 2 seconds, return. The core resists the cable pulling you toward the machine. 10 reps, then turn and repeat on the other side.</strong> Very light weight — 5–8kg. The Pallof press is anti-rotation core work — it trains the obliques and deep core to resist twisting forces, which is exactly what running, skiing, and paddling demand. Wrist stays neutral holding the D-handle.<br>
+    <span class="mod-note">D-handle, neutral grip — light load, wrist safe</span>
+  </div>
+</div>
+
+<!-- MOBILITY COMPLEMENT -->
+<div class="section-divider"><div class="div-label">Mobility complement — post-session · 5 min</div><div class="div-line"></div></div>
+
+<div class="ex-card stretch-card" id="p1-11" onclick="toggle('p1',11)">
+  <div class="ex-header">
+    <div class="ex-num num-stretch">S1</div>
+    <div><div class="ex-title">Hip flexor kneeling stretch</div><div class="ex-meta">kneeling · post-squat and lunge</div></div>
+    <div class="ex-right"><div class="ex-sets">60s each</div><div class="focus-badge f-stretch">hip flexors</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-11">
+    Kneel on one knee, other foot forward. <strong>Shift weight forward gently until you feel the stretch at the front of the back hip. Hold 60 seconds. Breathe.</strong> Hip flexors tighten with running and sitting — this directly counters that. Critical for lower back health and running mechanics. Switch sides. Do not force range — a gentle sustained stretch is more effective and safer than an aggressive one. Forearm on front knee for support if needed.<br>
+    <span class="mod-note">Forearm on knee for support — wrist unloaded</span>
+  </div>
+</div>
+
+<div class="ex-card stretch-card" id="p1-12" onclick="toggle('p1',12)">
+  <div class="ex-header">
+    <div class="ex-num num-stretch">S2</div>
+    <div><div class="ex-title">Doorway or cable chest opener</div><div class="ex-meta">standing · post-press</div></div>
+    <div class="ex-right"><div class="ex-sets">45s each</div><div class="focus-badge f-stretch">chest / shoulders</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-12">
+    Set one cable to shoulder height with a D-handle. Hold the handle, step forward until you feel the stretch across the chest and front of the shoulder. <strong>Turn slightly away, hold 45 seconds. Switch sides.</strong> Alternatively use a doorway — arm at 90 degrees, lean through. Counters the forward shoulder posture that pressing work can reinforce if not balanced. Especially valuable for paddling shoulder health.<br>
+    <span class="mod-note">Hold cable with relaxed hand — no grip effort required</span>
+  </div>
+</div>
+
+<div class="ex-card stretch-card" id="p1-13" onclick="toggle('p1',13)">
+  <div class="ex-header">
+    <div class="ex-num num-stretch">S3</div>
+    <div><div class="ex-title">Seated piriformis stretch</div><div class="ex-meta">bench · post-lower body</div></div>
+    <div class="ex-right"><div class="ex-sets">60s each</div><div class="focus-badge f-stretch">glutes / hips</div></div>
+  </div>
+  <div class="ex-detail" id="p1-det-13">
+    Sit on the bench, cross one ankle over the opposite knee (figure-4 position). <strong>Sit tall and gently lean forward from the hips until you feel the stretch deep in the glute. Hold 60 seconds. Switch sides.</strong> The piriformis and deep hip rotators are heavily loaded during squats, lunges, and running. This stretch directly addresses the hip tightness that feeds into lower back and IT band issues. Hands resting on the shin — no wrist loading.<br>
+    <span class="mod-note">Hands resting on shin — no wrist load required</span>
+  </div>
+</div>
+
+<div class="principle">
+  <div class="principle-label">Phase 1 principle</div>
+  <strong>Movement quality over load. Always.</strong> In the anatomical adaptation phase, the nervous system is learning patterns and connective tissue is adapting. Adding load too early interrupts both processes. If a set feels easy, that is correct. The load increases in Phase 3. The pattern you build now is the one you will use for years.
+</div>
+
+</div><!-- end phase1 -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     PHASE 2 — COTTAGE · DUMBBELLS + CONCEPT 2 + CANOE
+     Summer · 3× per week · maintain adaptation
+════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-phase2">
+
+<div class="phase-intro">
+  <strong>Phase 2 · Cottage · Summer · Dumbbells + rucking + canoe</strong><br>
+  Goal is to maintain the movement patterns and adaptation built in Phase 1. Equipment is limited but sufficient — dumbbells for structured sessions, rucking as the load-bearing cardio complement, canoe and wood chopping as functional training. The canoe and outdoor activity count as real training load — on heavy paddling or rucking days, reduce session volume by one set per exercise. Three sessions per week, M/W/F pattern maintained. Never on back-to-back days.
+</div>
+
+<div class="section-divider"><div class="div-label">Lower body</div><div class="div-line"></div></div>
+
+<div class="ex-card" id="p2-0" onclick="toggle('p2',0)">
+  <div class="ex-header">
+    <div class="ex-num num-lower">1</div>
+    <div><div class="ex-title">Dumbbell goblet squat</div><div class="ex-meta">dumbbell · squat pattern</div></div>
+    <div class="ex-right"><div class="ex-sets">2–3 × 12</div><div class="focus-badge f-lower">quads / glutes</div></div>
+  </div>
+  <div class="ex-detail" id="p2-det-0">
+    Hold one dumbbell vertically at chest height, both hands cupped around one end. Feet shoulder-width, toes slightly out. <strong>Squat to comfortable depth, drive through the whole foot to stand. Slow and controlled.</strong> By Phase 2 your squat pattern will be established — start adding load gradually (increase 2kg when 12 reps feel easy across two sessions). The cupped grip is completely wrist-safe for the left hand.<br>
+    <span class="mod-note">Both hands cupped around dumbbell end — no wrist strain</span>
+    <span class="bone-tag">bone density</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p2-1" onclick="toggle('p2',1)">
+  <div class="ex-header">
+    <div class="ex-num num-lower">2</div>
+    <div><div class="ex-title">Dumbbell Romanian deadlift</div><div class="ex-meta">dumbbells · hip hinge</div></div>
+    <div class="ex-right"><div class="ex-sets">2–3 × 10</div><div class="focus-badge f-lower">glutes / hamstrings</div></div>
+  </div>
+  <div class="ex-detail" id="p2-det-1">
+    Hold a dumbbell in each hand, palms facing thighs. <strong>Hinge at the hips — push them back, lower the dumbbells along the front of the legs to mid-shin, feel the hamstring stretch, drive hips forward to stand. Squeeze glutes at top.</strong> The hip hinge pattern from Phase 1 pull-throughs transfers directly here. Keep the dumbbells close to the legs throughout. Left grip: hold the dumbbell with a relaxed grip — the weight is supported by the fingers, not gripped with the thumb.<br>
+    <span class="mod-note">Relaxed grip — weight rests in fingers, minimal thumb pressure</span>
+    <span class="bone-tag">bone density</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p2-2" onclick="toggle('p2',2)">
+  <div class="ex-header">
+    <div class="ex-num num-lower">3</div>
+    <div><div class="ex-title">Reverse lunge — dumbbells</div><div class="ex-meta">dumbbells · single leg</div></div>
+    <div class="ex-right"><div class="ex-sets">2–3 × 8 each</div><div class="focus-badge f-lower">quads / glutes</div></div>
+  </div>
+  <div class="ex-detail" id="p2-det-2">
+    Hold light dumbbells at sides. <strong>Step back, lower back knee toward ground, drive through front heel to return.</strong> By Phase 2 the pattern should be solid — add light load (4–6kg) if balance is stable. Dumbbells hang at the side — the left hand only needs to support the weight against gravity, no backward wrist pressure involved.<br>
+    <span class="mod-note">Dumbbells hang at side — neutral wrist position</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p2-3" onclick="toggle('p2',3)">
+  <div class="ex-header">
+    <div class="ex-num num-lower">4</div>
+    <div><div class="ex-title">Single-leg calf raise</div><div class="ex-meta">bodyweight · one leg</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 12 each</div><div class="focus-badge f-lower">calves</div></div>
+  </div>
+  <div class="ex-detail" id="p2-det-3">
+    Stand on one foot, hand lightly on a wall or tree for balance. <strong>Rise onto the ball of the foot, pause 2 seconds, lower slowly over 3–4 seconds. 12 each side.</strong> Single-leg version is a significant load increase from bilateral — it may feel challenging with bodyweight alone. The slow lowering is essential. Progress to holding a light dumbbell when 12 reps feel easy.<br>
+    <span class="mod-note">Touch wall for balance only — no grip load</span>
+  </div>
+</div>
+
+<div class="section-divider"><div class="div-label">Upper body</div><div class="div-line"></div></div>
+
+<div class="ex-card" id="p2-4" onclick="toggle('p2',4)">
+  <div class="ex-header">
+    <div class="ex-num num-upper">5</div>
+    <div><div class="ex-title">Rucking — loaded pack carry</div><div class="ex-meta">outdoors · posterior chain + cardio</div></div>
+    <div class="ex-right"><div class="ex-sets">30–45 min</div><div class="focus-badge f-full">full body</div></div>
+  </div>
+  <div class="ex-detail" id="p2-det-4">
+    Use your existing pack loaded to 20–25 lbs. Walk at a brisk pace on trails or varied terrain. <strong>Maintain upright posture — do not lean forward into the pack. Shoulders back, core engaged throughout.</strong> Rucking loads the posterior chain, builds bone density through axial loading, and provides cardiovascular stimulus without the joint impact of running. On heavy ruck days (45+ min), count it as a training session and reduce the strength session to lower body only. Completely wrist-safe — pack straps across shoulders, hands free.<br>
+    <span class="mod-note">Completely wrist-safe — hands free throughout</span>
+    <span class="bone-tag">bone density — axial load</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p2-5" onclick="toggle('p2',5)">
+  <div class="ex-header">
+    <div class="ex-num num-upper">6</div>
+    <div><div class="ex-title">Dumbbell bent-over row</div><div class="ex-meta">dumbbell · unilateral pull</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 10 each</div><div class="focus-badge f-upper">lats / mid-back</div></div>
+  </div>
+  <div class="ex-detail" id="p2-det-5">
+    Hinge forward at the hips, one hand resting on a surface for support (bench, chair, rock). Hold dumbbell in the other hand hanging straight down. <strong>Pull the dumbbell to the lower ribcage — elbow drives up and back. Lower with control. 10 reps, switch sides.</strong> Left arm row: hold the dumbbell in a loose grip, supported by the fingers. The thumb does not need to grip tightly. Right arm rows can use full grip strength as normal.<br>
+    <span class="mod-note">Left hand: loose grip, weight supported by fingers — thumb relaxed</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p2-6" onclick="toggle('p2',6)">
+  <div class="ex-header">
+    <div class="ex-num num-upper">7</div>
+    <div><div class="ex-title">Dumbbell shoulder press</div><div class="ex-meta">dumbbells · overhead push</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 10</div><div class="focus-badge f-upper">shoulders</div></div>
+  </div>
+  <div class="ex-detail" id="p2-det-6">
+    Seated or standing. Dumbbells at shoulder height, palms facing forward or slightly inward. <strong>Press overhead to full extension without locking elbows. Lower with control — 3 seconds down.</strong> Keep wrists straight — do not let them bend backward. Left hand: use a weight where the thumb is not under pressure. If there is any thumb discomfort, reduce load until it resolves. Start light — the shoulder stabilisers are still adapting.<br>
+    <span class="mod-note">Wrists straight throughout — reduce load if left thumb discomfort</span>
+  </div>
+</div>
+
+<div class="section-divider"><div class="div-label">Core</div><div class="div-line"></div></div>
+
+<div class="ex-card" id="p2-7" onclick="toggle('p2',7)">
+  <div class="ex-header">
+    <div class="ex-num num-core">8</div>
+    <div><div class="ex-title">Dead bug — progress to weighted</div><div class="ex-meta">floor · core stability</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 10 each</div><div class="focus-badge f-core">core</div></div>
+  </div>
+  <div class="ex-detail" id="p2-det-7">
+    Same as Phase 1 but increase reps to 10 per side. <strong>If this is easy, hold a light dumbbell in each hand pointing to the ceiling — this adds load to the core as the arm moves overhead.</strong> Lower back must stay flat. This is the cottage core staple — no equipment needed beyond a mat or flat ground.<br>
+    <span class="mod-note">Hold dumbbell loosely — weight rests in palm, no grip effort</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p2-8" onclick="toggle('p2',8)">
+  <div class="ex-header">
+    <div class="ex-num num-core">9</div>
+    <div><div class="ex-title">Suitcase carry — dumbbell</div><div class="ex-meta">dumbbell · loaded carry</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 30m each</div><div class="focus-badge f-core">core / anti-lateral</div></div>
+  </div>
+  <div class="ex-detail" id="p2-det-8">
+    Hold one dumbbell at your side. <strong>Walk 30 metres tall and upright — do not lean toward or away from the weight. Switch hands, return.</strong> The suitcase carry is one of the most functional core exercises — it trains the core to resist lateral flexion under load, which is exactly what paddling and carrying gear requires. Right hand at full load, left hand at reduced load (or skip left if thumb discomfort). Walk on any terrain — uneven ground adds to the stability demand.<br>
+    <span class="mod-note">Right hand full load · left hand reduced load or omit if thumb discomfort</span>
+  </div>
+</div>
+
+<div class="principle">
+  <div class="principle-label">Phase 2 principle</div>
+  <strong>The canoe is training. The ruck is training. The wood chopping is training.</strong> Paddling loads the lats, rhomboids, core, and shoulders in exactly the functional pattern this program is building. Rucking builds bone density and posterior chain endurance without joint impact. Wood chopping develops rotational power. On heavy outdoor days, reduce the structured session to lower body only and core. The cottage summer is not a break from the program — it is the program in its natural environment.
+</div>
+
+</div><!-- end phase2 -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     PHASE 3 — RETURN TO CENTR 3 · STRENGTH ENDURANCE
+     Fall / Winter · 3× per week · progressive load
+════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-phase3">
+
+<div class="phase-intro">
+  <strong>Phase 3 · Centr 3 return · Fall/Winter · Strength endurance + progressive load</strong><br>
+  By now the movement patterns are solid, connective tissue has adapted, and body composition has changed. Phase 3 introduces progressive load increases on the compound movements and begins building genuine strength endurance. Ski season prep from October. Bone density work intensifies with heavier compound loading.
+</div>
+
+<div class="section-divider"><div class="div-label">Phase 3 structure</div><div class="div-line"></div></div>
+
+<div class="ex-card" id="p3-0" onclick="toggle('p3',0)">
+  <div class="ex-header">
+    <div class="ex-num num-lower">A</div>
+    <div><div class="ex-title">Lower body — progress compound lifts</div><div class="ex-meta">Centr 3 · smith bar + cables</div></div>
+    <div class="ex-right"><div class="ex-sets">3 × 10</div><div class="focus-badge f-lower">glutes / quads</div></div>
+  </div>
+  <div class="ex-detail" id="p3-det-0">
+    Return to the Smith bar squat and cable pull-through with progressive load. <strong>Add weight when 10 reps feel comfortable across two consecutive sessions — typically 2.5–5kg increments.</strong> The goblet squat graduates to a Smith bar back squat at this stage if form is solid. Cable pull-through transitions toward a single-leg Romanian deadlift for continued hip and glute development. Bone density stimulus increases with heavier compound loading — this is the phase where that benefit becomes significant.<br>
+    <span class="bone-tag">bone density — primary phase</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p3-1" onclick="toggle('p3',1)">
+  <div class="ex-header">
+    <div class="ex-num num-upper">B</div>
+    <div><div class="ex-title">Upper body — add volume and load</div><div class="ex-meta">Centr 3 · cables</div></div>
+    <div class="ex-right"><div class="ex-sets">3 × 10</div><div class="focus-badge f-upper">full upper</div></div>
+  </div>
+  <div class="ex-detail" id="p3-det-1">
+    Progress from 2 sets to 3 sets on all upper body movements. Add a face pull (cable at eye height, rope handle, pull to face — excellent for rhomboid and rear delt) to the pull session. <strong>Face pulls are completely wrist-safe and directly target the left rhomboid tightness.</strong> Continue the Concept 2 as warm-up at a more challenging pace (damper 5, rate 20 for 5 minutes). Shoulder pressing load increases gradually — track the left thumb response at each load increase.<br>
+    <span class="mod-note">Face pull — rope handle, wrist neutral, rhomboid specific</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p3-2" onclick="toggle('p3',2)">
+  <div class="ex-header">
+    <div class="ex-num num-core">C</div>
+    <div><div class="ex-title">Core — progress to loaded carries and rotation</div><div class="ex-meta">Centr 3 · cables + floor</div></div>
+    <div class="ex-right"><div class="ex-sets">2–3 × 10</div><div class="focus-badge f-core">core</div></div>
+  </div>
+  <div class="ex-detail" id="p3-det-2">
+    Pallof press increases in load. Add cable woodchop (high to low and low to high) — this directly trains the rotational core pattern used in skiing moguls, canoeing, and carrying. <strong>Cable woodchop: set cable at shoulder height, both hands on D-handle, rotate the cable across the body in a chopping motion. 10 each direction.</strong> Wrist is neutral throughout. The dead bug continues as a warm-up for the core section rather than the primary exercise.<br>
+    <span class="mod-note">D-handle woodchop — neutral wrist, both directions</span>
+  </div>
+</div>
+
+<div class="ex-card" id="p3-3" onclick="toggle('p3',3)">
+  <div class="ex-header">
+    <div class="ex-num num-lower">D</div>
+    <div><div class="ex-title">Ski prep — October focus</div><div class="ex-meta">Centr 3 · sport specific</div></div>
+    <div class="ex-right"><div class="ex-sets">2 × 12</div><div class="focus-badge f-lower">quads / lateral</div></div>
+  </div>
+  <div class="ex-detail" id="p3-det-3">
+    From October, add two ski-specific exercises: <strong>Cable lateral squat</strong> (squat while moving laterally — mimics traverse and mogul skiing) and <strong>Cable lateral band walk</strong> (ankle strap, low cable, walk sideways — glute medius, the key ski stabiliser). Both are wrist-safe. Wall sit (60 seconds, build to 90) is added as a finisher — it directly builds the sustained quad endurance skiing demands. These supplement the base program, not replace it.<br>
+    <span class="mod-note">All ski prep exercises wrist-safe by design</span>
+  </div>
+</div>
+
+<div class="principle">
+  <div class="principle-label">Phase 3 principle</div>
+  <strong>Load is a tool, not a goal.</strong> Increase weight to maintain the stimulus as the body adapts — but the movement pattern always governs the load, not the other way around. If form degrades under load, reduce the weight. The bone density and body composition goals are both served by consistent progressive loading over months and years, not by chasing numbers in any single session.
+</div>
+
+</div><!-- end phase3 -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     PROTOCOLS
+════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-protocols">
+
+<div class="section-divider"><div class="div-label">Wrist and thumb protocols</div><div class="div-line"></div></div>
+
+<div class="protocol">
+  <strong>General rule:</strong> No backward wrist pressure. No push-up position. No heavy gripping with the left thumb. Cable and dumbbell work with neutral grip is the default. If any exercise causes sharp left thumb pain — stop immediately, substitute or omit. Background soreness is acceptable; sharp pain is a signal.
+</div>
+<div class="protocol">
+  <strong>Grip strategy:</strong> Right hand grips normally. Left hand uses a supported or relaxed grip — the weight rests in the fingers, the thumb acts as a guide only. Straps can be used on pulling exercises if grip fatigue becomes limiting.
+</div>
+<div class="protocol">
+  <strong>Pressing substitution:</strong> All push-up variations are permanently replaced with cable chest press. This is not a temporary modification — it is the correct exercise for this anatomy.
+</div>
+
+<div class="section-divider"><div class="div-label">Stiffness protocols</div><div class="div-line"></div></div>
+
+<div class="protocol">
+  <strong>General stiffness (≤4/10):</strong> Proceed as planned. Extend warm-up to 7 minutes on the rower. Reduce load by 20% on lower body if hip stiffness is present. Proceed normally on upper body and core.
+</div>
+<div class="protocol">
+  <strong>High stiffness (>4/10):</strong> Mobility session only — no strength training. Running is also substituted per the fitness parking note. Do not force strength work through high stiffness — the joints need fluid movement, not load.
+</div>
+<div class="protocol">
+  <strong>Gout flare:</strong> Strength training paused entirely during active flare. Resume with Phase 1 loads on return, regardless of which phase you were in. One week gradual return before resuming prior loads.
+</div>
+
+<div class="section-divider"><div class="div-label">GLP-1 protocol</div><div class="div-line"></div></div>
+
+<div class="protocol">
+  <strong>Protein priority:</strong> Target 1.6–2g protein per kg bodyweight daily (165–205g at current weight, scaling down as weight reduces). Prioritise protein at every meal. Resistance training without adequate protein on GLP-1 results in significant lean mass loss alongside fat.
+</div>
+<div class="protocol">
+  <strong>Session on reduced appetite days:</strong> Do not skip strength sessions because appetite is suppressed. Have a small protein-containing snack before the session if necessary. The training stimulus is what protects muscle — consistency matters more than any single session feeling perfect.
+</div>
+<div class="protocol">
+  <strong>Energy management:</strong> GLP-1 may reduce energy available for training, especially early. Reduce loads by 10–15% on low-energy days rather than skipping. Maintain frequency over intensity.
+</div>
+
+<div class="section-divider"><div class="div-label">Recovery protocols</div><div class="div-line"></div></div>
+
+<div class="protocol">
+  <strong>Monday / Wednesday / Friday:</strong> This is the session pattern. Running fits on Tuesday, Thursday, Saturday or Sunday. Never on back-to-back days. If a session is missed, do not double up — resume the next scheduled day.
+</div>
+<div class="protocol">
+  <strong>Sleep — active HFD goal:</strong> Target 7 hours average and Garmin score 80+ consistently. Current baseline ~6 hours / score 70. Sleep improvement is the single highest-leverage recovery intervention available. Until sleep improves, do not increase volume beyond the M/W/F pattern. When in doubt, do less.
+</div>
+
+<div class="section-divider"><div class="div-label">Weekly log — update each Friday</div><div class="div-line"></div></div>
+
+<div style="overflow-x:auto;margin-bottom:0.5rem">
+<table style="width:100%;border-collapse:collapse;font-size:11px">
+  <tr style="background:#eeeae4">
+    <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:#888;font-family:'Courier New',monospace;border-bottom:1px solid #d4cfc7;white-space:nowrap">Week of</th>
+    <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:#888;font-family:'Courier New',monospace;border-bottom:1px solid #d4cfc7;white-space:nowrap">Str sessions</th>
+    <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:#888;font-family:'Courier New',monospace;border-bottom:1px solid #d4cfc7;white-space:nowrap">Runs</th>
+    <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:#888;font-family:'Courier New',monospace;border-bottom:1px solid #d4cfc7;white-space:nowrap">Stiffness</th>
+    <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:#888;font-family:'Courier New',monospace;border-bottom:1px solid #d4cfc7;white-space:nowrap">Sleep / score</th>
+    <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:#888;font-family:'Courier New',monospace;border-bottom:1px solid #d4cfc7;white-space:nowrap">Weight</th>
+    <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:#888;font-family:'Courier New',monospace;border-bottom:1px solid #d4cfc7">Load / notes</th>
+  </tr>
+  <tr>
+    <td style="padding:5px 6px;border-bottom:1px solid #eeeae4;font-family:'Courier New',monospace;color:#ccc;font-style:italic;font-size:10px" colspan="7">Fill in each Friday from Apple Notes session logs</td>
+  </tr>
+</table>
+</div>
+
+<div class="protocol">
+  <strong>Apple Notes → weekly log workflow:</strong> After each session, log 1–2 lines to Apple Notes: date, session type, stiffness before/after, load notes, sleep last night. Each Friday, transfer the week's Apple Notes into the log row above. 10 minutes total. This is the raw field capture → structured record pipeline.
+</div>
+
+</div><!-- end protocols -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     PROGRESSION
+════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-progression">
+
+<div class="phase-intro">
+  Progression in the anatomical adaptation phase is measured by movement quality and consistency, not load. Load increases come after the pattern is solid. The table below is a guide — your body's response governs the actual timeline.
+</div>
+
+<div class="section-divider"><div class="div-label">Phase progression timeline</div><div class="div-line"></div></div>
+
+<table class="prog-table">
+  <tr><th>Weeks</th><th>Phase</th><th>Load</th><th>Sessions/wk</th><th>Sets</th></tr>
+  <tr><td>1–2</td><td>Phase 1 · pattern only</td><td>Minimal — movement focus</td><td>M/W/F (3×)</td><td>2</td></tr>
+  <tr><td>3–4</td><td>Phase 1 · light load</td><td>Add load when pattern is clean</td><td>M/W/F (3×)</td><td>2</td></tr>
+  <tr><td>5–6</td><td>Phase 1 · consolidate</td><td>Progressive — small increments</td><td>M/W/F (3×)</td><td>2–3</td></tr>
+  <tr><td>Summer</td><td>Phase 2 · cottage</td><td>Maintain · dumbbells + ruck + canoe</td><td>M/W/F (3×)</td><td>2–3</td></tr>
+  <tr><td>Fall return</td><td>Phase 3 · strength endurance</td><td>Progressive compound loading</td><td>M/W/F (3×)</td><td>3</td></tr>
+  <tr><td>Oct onward</td><td>Phase 3 · ski prep</td><td>Add ski-specific movements</td><td>M/W/F (3×)</td><td>3</td></tr>
+</table>
+
+<div class="section-divider"><div class="div-label">Load increase rule</div><div class="div-line"></div></div>
+
+<div class="protocol">
+  <strong>The 2-session rule:</strong> Only increase load when the current weight feels comfortable and controlled across two consecutive sessions. Not one good day — two. Increase by the smallest available increment (typically 2.5–5kg on cables, 2kg on dumbbells). Never increase load and volume simultaneously.
+</div>
+
+<div class="section-divider"><div class="div-label">Long-term goals — 12 months</div><div class="div-line"></div></div>
+
+<table class="prog-table">
+  <tr><th>Goal</th><th>Indicator</th><th>Timeline</th></tr>
+  <tr><td>Movement patterns</td><td>All 10 Phase 1 exercises with clean form</td><td>Weeks 1–4</td></tr>
+  <tr><td>Body composition</td><td>190–195 lbs muscular / ~180 lbs without added mass (GLP-1 assisted)</td><td>6–12 months</td></tr>
+  <tr><td>Functional strength</td><td>Carry, paddle, ski without fatigue limiting enjoyment</td><td>6 months</td></tr>
+  <tr><td>Bone density</td><td>Progressive compound loading established and maintained</td><td>Ongoing — 12+ months</td></tr>
+  <tr><td>Upper body rebuild</td><td>Pulling and pressing strength restored to comfortable daily function</td><td>3–6 months</td></tr>
+  <tr><td>Trail run distance</td><td>Build from 12–15km peak toward marathon 42km — trail only, joint managed</td><td>Fall 2028 / Spring 2029</td></tr>
+  <tr><td>Sleep</td><td>7 hrs average · Garmin score 80+ consistently</td><td>Active goal — ongoing</td></tr>
+</table>
+
+<div class="footer-note">
+  <strong>Session reference:</strong> This file was built and updated in sessions 2–3, April 2026. It belongs in Logbooks/HFD/_Admin/. The mobility complement (stretches S1–S3) is distinct from morning_mobility_desktop.html — those are post-session stretches, not the morning therapeutic routine. Concept 2 is home gym only — not available at the cottage.<br><br>
+  <strong>Dream goal context:</strong> Trail marathon (42km) by fall 2028 / spring 2029. Trail running only for joint management. This informs the long-term direction — single-leg stability, glute endurance, and posterior chain resilience become more prominent in Phase 3 and beyond.<br><br>
+  <strong>Next session:</strong> Review after 4 weeks of Phase 1 to assess movement quality, load response, and GLP-1 interaction. Adjust protocol if needed.
+</div>
+
+</div><!-- end progression -->
+
+
+<script>
+// ── Timer ──────────────────────────────────────────
+const TOTAL = 2400; // 40 min
+let remaining = TOTAL;
+let running = false;
+let iv = null;
+
+function fmt(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+function updateDisp() {
+  document.getElementById('timer-display').textContent = fmt(remaining);
+  const pct = Math.round(((TOTAL - remaining) / TOTAL) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+function toggleTimer() {
+  if (running) {
+    clearInterval(iv); running = false;
+    document.getElementById('start-btn').textContent = 'Resume';
+    document.getElementById('timer-label').textContent = 'Paused';
+  } else {
+    running = true;
+    document.getElementById('start-btn').textContent = 'Pause';
+    document.getElementById('timer-label').textContent = 'Session in progress…';
+    iv = setInterval(() => {
+      if (remaining > 0) { remaining--; updateDisp(); }
+      else {
+        clearInterval(iv); running = false;
+        document.getElementById('start-btn').textContent = 'Done';
+        document.getElementById('timer-label').textContent = 'Session complete';
+        document.getElementById('progress-fill').style.width = '100%';
+      }
+    }, 1000);
+  }
+}
+function resetTimer() {
+  clearInterval(iv); running = false; remaining = TOTAL;
+  document.getElementById('start-btn').textContent = 'Start';
+  document.getElementById('timer-label').textContent = 'Ready — press start';
+  updateDisp();
+}
+
+// ── Tabs ──────────────────────────────────────────
+function showPane(id, btn) {
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('pane-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Exercise cards ────────────────────────────────
+function toggle(phase, i) {
+  const detId = phase + '-det-' + i;
+  const cardId = phase + '-' + i;
+  const det = document.getElementById(detId);
+  const card = document.getElementById(cardId);
+  if (!det || !card) return;
+  const wasOpen = det.classList.contains('open');
+  // Close all in this phase
+  document.querySelectorAll('.ex-detail').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.ex-card').forEach(c => c.classList.remove('active-card'));
+  if (!wasOpen) {
+    det.classList.add('open');
+    card.classList.add('active-card');
+  }
+}
+</script>
+</body>
+</html>
